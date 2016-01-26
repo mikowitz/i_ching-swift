@@ -10,7 +10,7 @@ import UIKit
 
 class DetailViewController: UIViewController {
 
-    @IBOutlet weak var detailDescriptionLabel: UILabel!
+    @IBOutlet weak var englishName: UILabel!
 
 
     var hexagram: Hexagram? {
@@ -24,8 +24,8 @@ class DetailViewController: UIViewController {
         // Update the user interface for the detail item.
         if let hexagram = self.hexagram {
             self.title = hexagram.chineseName
-            if let label = self.detailDescriptionLabel {
-                label.text = hexagram.englishName
+            if let englishNameLabel = self.englishName {
+                englishNameLabel.text = hexagram.englishName
             }
         }
     }

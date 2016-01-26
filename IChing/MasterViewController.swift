@@ -18,16 +18,16 @@ class MasterViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-//        self.navigationItem.leftBarButtonItem = self.editButtonItem()
-//
-//        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
-//        self.navigationItem.rightBarButtonItem = addButton
         if let split = self.splitViewController {
             let controllers = split.viewControllers
             self.detailViewController = (controllers[controllers.count-1] as! UINavigationController).topViewController as? DetailViewController
         }
         
+        loadHexagrams()
+        
+    }
+    
+    func loadHexagrams() {
         Alamofire.request(.GET, "https://verdant-meadow-71296.herokuapp.com/api/v1/hexagrams")
             .responseJSON { response in
                 
@@ -73,10 +73,9 @@ class MasterViewController: UITableViewController {
     }
 
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if section == 0 {
-            return 1
-        } else {
-            return hexagrams.count
+        switch section {
+        case 0: return 1
+        default: return hexagrams.count
         }
     }
     
@@ -89,10 +88,9 @@ class MasterViewController: UITableViewController {
     }
     
     override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        if section == 0 {
-            return 20.0
-        } else {
-            return 0.0
+        switch section {
+        case 0: return 20.0
+        default: return 0.0
         }
     }
 
@@ -126,12 +124,15 @@ class MasterViewController: UITableViewController {
         let alertController = UIAlertController(title: "Cast Hexagram", message: "Choose casting method", preferredStyle: .ActionSheet)
         let yarrowAction = UIAlertAction(title: "Yarrow", style: .Default) { Void in
             print("cast with yarrow")
+            self.castHexagram("Yarrow")
         }
         let coinsAction = UIAlertAction(title: "Coins", style: .Default) { Void in
             print("cast with coins")
+            self.castHexagram("Coins")
         }
         let randomAction = UIAlertAction(title: "Random", style: .Default) { Void in
             print("cast with random")
+            self.castHexagram("Random")
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .Cancel, handler: nil)
         alertController.addAction(yarrowAction)
@@ -139,6 +140,14 @@ class MasterViewController: UITableViewController {
         alertController.addAction(randomAction)
         alertController.addAction(cancelAction)
         return alertController
+    }
+    
+    func castHexagram(castingMethod: String) {
+        print(castingMethod)
+        let navigationController = UIStoryboard(name: "Main", bundle: nil).instantiateViewControllerWithIdentifier("IChingNavigationViewController") as! IChingNavigationViewController
+        let castingController = navigationController.viewControllers[0] as! CastHexagramViewController
+        castingController.castingMethod = castingMethod
+        self.presentViewController(navigationController, animated: true, completion: nil)
     }
 
 }
