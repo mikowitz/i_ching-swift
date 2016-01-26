@@ -58,7 +58,7 @@ class MasterViewController: UITableViewController {
             if let indexPath = self.tableView.indexPathForSelectedRow {
                 let hexagram = hexagrams[indexPath.row] as Hexagram
                 let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
-                controller.hexagram = hexagram
+                controller.kingWenNumber = hexagram.kingWenNumber
                 controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem()
                 controller.navigationItem.leftItemsSupplementBackButton = true
                 

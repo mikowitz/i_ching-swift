@@ -7,16 +7,25 @@
 //
 
 import UIKit
+import Alamofire
+import ObjectMapper
 
 class DetailViewController: UIViewController {
 
     @IBOutlet weak var englishName: UILabel!
 
+    var hexagram : Hexagram?
 
-    var hexagram: Hexagram? {
+    var kingWenNumber : Int? {
         didSet {
-            // Update the view.
-            self.configureView()
+            Alamofire.request(.GET, "https://verdant-meadow-71296.herokuapp.com/api/v1/hexagrams/\(kingWenNumber!)")
+                .responseJSON { response in
+                    if let JSONString = response.result.value {
+                        self.hexagram = Mapper<Hexagram>().map(JSONString) as Hexagram!
+                        print("\(self.hexagram)")
+                        self.configureView()
+                    }
+            }
         }
     }
 
