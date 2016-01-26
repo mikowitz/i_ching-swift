@@ -7,23 +7,34 @@
 //
 
 import UIKit
+import Alamofire
+import ObjectMapper
 
 class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
-    var objects = [AnyObject]()
+    var hexagrams = [Hexagram]()
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        self.navigationItem.leftBarButtonItem = self.editButtonItem()
-
-        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
-        self.navigationItem.rightBarButtonItem = addButton
+//        self.navigationItem.leftBarButtonItem = self.editButtonItem()
+//
+//        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
+//        self.navigationItem.rightBarButtonItem = addButton
         if let split = self.splitViewController {
             let controllers = split.viewControllers
             self.detailViewController = (controllers[controllers.count-1] as! UINavigationController).topViewController as? DetailViewController
+        }
+        
+        Alamofire.request(.GET, "https://verdant-meadow-71296.herokuapp.com/api/v1/hexagrams")
+            .responseJSON { response in
+                
+                if let JSONString = response.result.value {
+                    self.hexagrams = Mapper<Hexagram>().mapArray(JSONString) as [Hexagram]!
+                    self.tableView.reloadData()
+                }
         }
     }
 
@@ -38,9 +49,6 @@ class MasterViewController: UITableViewController {
     }
 
     func insertNewObject(sender: AnyObject) {
-        objects.insert(NSDate(), atIndex: 0)
-        let indexPath = NSIndexPath(forRow: 0, inSection: 0)
-        self.tableView.insertRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
     }
 
     // MARK: - Segues
@@ -48,11 +56,12 @@ class MasterViewController: UITableViewController {
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if segue.identifier == "showDetail" {
             if let indexPath = self.tableView.indexPathForSelectedRow {
-                let object = objects[indexPath.row] as! NSDate
+                let hexagram = hexagrams[indexPath.row] as Hexagram
                 let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
-                controller.detailItem = object
+                controller.hexagram = hexagram
                 controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem()
                 controller.navigationItem.leftItemsSupplementBackButton = true
+                
             }
         }
     }
@@ -60,35 +69,77 @@ class MasterViewController: UITableViewController {
     // MARK: - Table View
 
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return 1
+        return 2
     }
 
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return objects.count
+        if section == 0 {
+            return 1
+        } else {
+            return hexagrams.count
+        }
+    }
+    
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        if indexPath.section == 0 {
+            tableView.deselectRowAtIndexPath(indexPath, animated: true)
+            let castHexagramAlertController = castHexagramMenu()
+            presentViewController(castHexagramAlertController, animated: true, completion: nil)
+        }
+    }
+    
+    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        if section == 0 {
+            return 20.0
+        } else {
+            return 0.0
+        }
     }
 
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath)
+        if indexPath.section == 1 {
+            let cell = tableView.dequeueReusableCellWithIdentifier("HexagramCell", forIndexPath: indexPath)
 
-        let object = objects[indexPath.row] as! NSDate
-        cell.textLabel!.text = object.description
-        return cell
+            let hexagram = hexagrams[indexPath.row] as Hexagram
+            cell.textLabel!.text = hexagram.chineseName
+            return cell
+        } else {
+            let cell = tableView.dequeueReusableCellWithIdentifier("CastHexagramCell", forIndexPath: indexPath)
+            cell.textLabel!.text = "Cast Hexagram"
+            return cell
+        }
+        
     }
 
     override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
         // Return false if you do not want the specified item to be editable.
-        return true
+        return false
     }
 
     override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Delete {
-            objects.removeAtIndex(indexPath.row)
-            tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
-        } else if editingStyle == .Insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
-        }
     }
 
+    
+    // MARK: - Casting hexagram menu
+    
+    func castHexagramMenu() -> UIAlertController {
+        let alertController = UIAlertController(title: "Cast Hexagram", message: "Choose casting method", preferredStyle: .ActionSheet)
+        let yarrowAction = UIAlertAction(title: "Yarrow", style: .Default) { Void in
+            print("cast with yarrow")
+        }
+        let coinsAction = UIAlertAction(title: "Coins", style: .Default) { Void in
+            print("cast with coins")
+        }
+        let randomAction = UIAlertAction(title: "Random", style: .Default) { Void in
+            print("cast with random")
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .Cancel, handler: nil)
+        alertController.addAction(yarrowAction)
+        alertController.addAction(coinsAction)
+        alertController.addAction(randomAction)
+        alertController.addAction(cancelAction)
+        return alertController
+    }
 
 }
 

@@ -1,0 +1,6 @@
+framework module Pods_IChing {
+  umbrella header "Pods-IChing-umbrella.h"
+
+  export *
+  module * { export * }
+}
