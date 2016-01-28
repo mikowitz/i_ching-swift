@@ -18,13 +18,9 @@ class DetailViewController: UIViewController {
 
     var kingWenNumber : Int? {
         didSet {
-            Alamofire.request(.GET, "https://verdant-meadow-71296.herokuapp.com/api/v1/hexagrams/\(kingWenNumber!)")
-                .responseJSON { response in
-                    if let JSONString = response.result.value {
-                        self.hexagram = Mapper<Hexagram>().map(JSONString) as Hexagram!
-                        print("\(self.hexagram)")
-                        self.configureView()
-                    }
+            Hexagram.fetchHexagram(kingWenNumber!) { hexagram in
+                self.hexagram = hexagram
+                self.configureView()
             }
         }
     }

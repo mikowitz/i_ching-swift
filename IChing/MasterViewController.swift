@@ -14,6 +14,7 @@ class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
     var hexagrams = [Hexagram]()
+    var castingMethod : String?
 
 
     override func viewDidLoad() {
@@ -28,15 +29,13 @@ class MasterViewController: UITableViewController {
     }
     
     func loadHexagrams() {
-        Alamofire.request(.GET, "https://verdant-meadow-71296.herokuapp.com/api/v1/hexagrams")
-            .responseJSON { response in
-                
-                if let JSONString = response.result.value {
-                    self.hexagrams = Mapper<Hexagram>().mapArray(JSONString) as [Hexagram]!
-                    self.tableView.reloadData()
-                }
+        Hexagram.fetchHexagrams() { hexagrams in
+            self.hexagrams = hexagrams
+            self.tableView.reloadData()
         }
     }
+    
+    
 
     override func viewWillAppear(animated: Bool) {
         self.clearsSelectionOnViewWillAppear = self.splitViewController!.collapsed
@@ -54,7 +53,8 @@ class MasterViewController: UITableViewController {
     // MARK: - Segues
 
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if segue.identifier == "showDetail" {
+        switch segue.identifier! {
+        case "showDetail":
             if let indexPath = self.tableView.indexPathForSelectedRow {
                 let hexagram = hexagrams[indexPath.row] as Hexagram
                 let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
@@ -63,6 +63,15 @@ class MasterViewController: UITableViewController {
                 controller.navigationItem.leftItemsSupplementBackButton = true
                 
             }
+        case "showCastScreen":
+            let controller = (segue.destinationViewController as! IChingNavigationViewController).topViewController as! CastHexagramViewController
+            if let castingMethod = self.castingMethod {
+                controller.castingMethod = castingMethod
+            } else {
+                controller.castingMethod = "Yarrow"
+            }
+        default:
+            print("unknown segue: \(segue.identifier!)")
         }
     }
 
@@ -122,32 +131,21 @@ class MasterViewController: UITableViewController {
     
     func castHexagramMenu() -> UIAlertController {
         let alertController = UIAlertController(title: "Cast Hexagram", message: "Choose casting method", preferredStyle: .ActionSheet)
-        let yarrowAction = UIAlertAction(title: "Yarrow", style: .Default) { Void in
-            print("cast with yarrow")
-            self.castHexagram("Yarrow")
-        }
-        let coinsAction = UIAlertAction(title: "Coins", style: .Default) { Void in
-            print("cast with coins")
-            self.castHexagram("Coins")
-        }
-        let randomAction = UIAlertAction(title: "Random", style: .Default) { Void in
-            print("cast with random")
-            self.castHexagram("Random")
+        let methods = ["Yarrow", "Coins", "Random"]
+        for method in methods {
+            let action = UIAlertAction(title: method, style: .Default) { Void in
+                self.castHexagram(method)
+            }
+            alertController.addAction(action)
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .Cancel, handler: nil)
-        alertController.addAction(yarrowAction)
-        alertController.addAction(coinsAction)
-        alertController.addAction(randomAction)
         alertController.addAction(cancelAction)
         return alertController
     }
     
     func castHexagram(castingMethod: String) {
-        print(castingMethod)
-        let navigationController = UIStoryboard(name: "Main", bundle: nil).instantiateViewControllerWithIdentifier("IChingNavigationViewController") as! IChingNavigationViewController
-        let castingController = navigationController.viewControllers[0] as! CastHexagramViewController
-        castingController.castingMethod = castingMethod
-        self.presentViewController(navigationController, animated: true, completion: nil)
+        self.castingMethod = castingMethod
+        performSegueWithIdentifier("showCastScreen", sender: self)
     }
 
 }
